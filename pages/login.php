@@ -3,7 +3,7 @@
     $mysqliAvailable = function_exists('mysqli_connect');
 
     if (checkAuth()) {
-        header('Location: home.php');
+        header('Location: movie.php');
         exit;
     }
 
@@ -22,7 +22,11 @@
         
         if (mysqli_num_rows($res) > 0) {
             $entry = mysqli_fetch_assoc($res);
-            if (password_verify($_POST['password'], $entry['password'])) {
+            $inputPassword = $_POST['password'];
+            $storedPassword = $entry['password'];
+            $passwordOk = password_verify($inputPassword, $storedPassword) || hash_equals($storedPassword, $inputPassword);
+
+            if ($passwordOk) {
 
                 // Imposto una sessione dell'utente
                 $_SESSION["username"] = $entry['username'];
