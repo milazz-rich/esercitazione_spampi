@@ -1,5 +1,5 @@
-Create DATABASE AFRA;
-USE AFRA;
+Create DATABASE moviehub;
+USE moviehub;
 
 CREATE TABLE users (
  id INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -61,4 +61,3 @@ INSERT INTO movies(title, plot, poster, likes) VALUES
 'img/io_sono_leggenda.jpg',
 250
 );
-

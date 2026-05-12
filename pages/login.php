@@ -1,9 +1,21 @@
 <?php
-    require_once __DIR__ . '/../services/auth.service.php';
+    require_once __DIR__ . '/../services/app.service.php';
     $mysqliAvailable = function_exists('mysqli_connect');
+    $defaultRedirect = '../index.php';
+
+    $next = $_GET['next'] ?? $_POST['next'] ?? '';
+    if (!is_string($next)) {
+        $next = '';
+    }
+
+    $nextPath = parse_url($next, PHP_URL_PATH);
+    $nextHost = parse_url($next, PHP_URL_HOST);
+    $nextScheme = parse_url($next, PHP_URL_SCHEME);
+    $isSafeNext = $next !== '' && empty($nextHost) && empty($nextScheme) && ($nextPath === 'movie.php' || $nextPath === '../index.php' || $nextPath === 'index.php');
+    $redirectTarget = $isSafeNext ? $next : $defaultRedirect;
 
     if (checkAuth()) {
-        header('Location: movie.php');
+        header('Location: ' . $redirectTarget);
         exit;
     }
 
@@ -13,31 +25,12 @@
     else if (!empty($_POST["username"]) && !empty($_POST["password"]) )
     {
 
-        $conn = mysqli_connect($dbconfig['host'], $dbconfig['user'], $dbconfig['password'], $dbconfig['name']) or die(mysqli_error($conn));
-
-        $username = mysqli_real_escape_string($conn, $_POST['username']);
-        $query = "SELECT * FROM users WHERE username = '".$username."'";
-
-        $res = mysqli_query($conn, $query) or die(mysqli_error($conn));;
-        
-        if (mysqli_num_rows($res) > 0) {
-            $entry = mysqli_fetch_assoc($res);
-            $inputPassword = $_POST['password'];
-            $storedPassword = $entry['password'];
-            $passwordOk = password_verify($inputPassword, $storedPassword) || hash_equals($storedPassword, $inputPassword);
-
-            if ($passwordOk) {
-
-                // Imposto una sessione dell'utente
-                $_SESSION["username"] = $entry['username'];
-                $_SESSION["user_id"] = $entry['id'];
-                header("Location: home.php");
-                mysqli_free_result($res);
-                mysqli_close($conn);
-                exit;
-            }
+        $loginResult = attemptLogin($_POST['username'], $_POST['password']);
+        if ($loginResult['ok']) {
+            header("Location: " . $redirectTarget);
+            exit;
         }
-        $error = "Username e/o password errati.";
+        $error = $loginResult['error'];
     }
     else if (isset($_POST["username"]) || isset($_POST["password"])) {
         $error = "Inserisci username e password.";
@@ -65,6 +58,7 @@
             <?php endif; ?>
 
             <form method="post" class="login-form" autocomplete="on">
+                <input type="hidden" name="next" value="<?php echo htmlspecialchars($redirectTarget); ?>">
                 <label for="username">Username</label>
                 <input
                     type="text"
