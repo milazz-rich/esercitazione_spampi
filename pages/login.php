@@ -1,11 +1,16 @@
 <?php
-    require_once __DIR__ . '/../services/auth.service.php';;
+    require_once __DIR__ . '/../services/auth.service.php';
+    $mysqliAvailable = function_exists('mysqli_connect');
+
     if (checkAuth()) {
         header('Location: home.php');
         exit;
     }
 
-    if (!empty($_POST["username"]) && !empty($_POST["password"]) )
+    if (!$mysqliAvailable) {
+        $error = "Estensione mysqli non attiva nel PHP in uso.";
+    }
+    else if (!empty($_POST["username"]) && !empty($_POST["password"]) )
     {
 
         $conn = mysqli_connect($dbconfig['host'], $dbconfig['user'], $dbconfig['password'], $dbconfig['name']) or die(mysqli_error($conn));
